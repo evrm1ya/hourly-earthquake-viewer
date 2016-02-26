@@ -56,6 +56,7 @@ var eqPastHourQuery = (() => {
   const baseUrl = 'http://earthquake.usgs.gov/fdsnws/event/1/query?format=geojson';
   const starttimeQueryBase = '&starttime=';
   const endtimeQueryBase = '&endtime=';
+  const eastTimeZone = '-0500';
   function createTimes() {
     let currentTime = new Date();
     let hourInMS = 3600000;
@@ -80,8 +81,8 @@ var eqPastHourQuery = (() => {
   }
   function formatQueryUrls() {
     let timeStrings = formatTimeStrings();
-    let startTimeQuery = `${starttimeQueryBase}${timeStrings.oneHourAgo}`;
-    let endTimeQuery = `${endtimeQueryBase}${timeStrings.currentTime}`;
+    let startTimeQuery = `${starttimeQueryBase}${timeStrings.oneHourAgo}${eastTimeZone}`;
+    let endTimeQuery = `${endtimeQueryBase}${timeStrings.currentTime}${eastTimeZone}`;
     return `${startTimeQuery}${endTimeQuery}`;
   }
 
@@ -130,7 +131,6 @@ var eqDataMarkupGenerator = (() => {
     appendCellToRow(newRow, propsArr);
     return newRow;
   }
-
   return {
     createTableRows(cacheKey, eqDataCache) {
       let eqData = eqDataCache[cacheKey];
@@ -139,6 +139,9 @@ var eqDataMarkupGenerator = (() => {
         let row = makeSingleRow(props);
         tableId.appendChild(row);
       });
+    },
+
+    emptyTable() {
     }
   }
 })();
@@ -166,9 +169,11 @@ var getEqData = (() => {
   return {
     fetch() {
       let url = eqPastHourQuery.getPastHourUrl();
+      console.log(url);
       get(url)
         .then((response) => {
           let eqData = JSON.parse(response);
+          console.log(eqData);
           return eqData;
         }, (error) => {
           console.log('parse error ', error);
