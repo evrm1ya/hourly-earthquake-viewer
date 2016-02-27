@@ -1,0 +1,2 @@
+var eqDataCache = {};
+export { eqDataCache };
