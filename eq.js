@@ -142,25 +142,30 @@ var eqDataMarkupGenerator = (() => {
     },
 
     emptyTable() {
+      let tableChildren = tableId.childNodes;
+      let tableChildrenLength = tableChildren.length;
+      for (let i = 2; i < tableChildrenLength; i++) {
+        tableChildren[2].remove();
+      }
     }
   }
 })();
 
 var getEqData = (() => {
   function cacheEqData(eqData) {
-    var currentCacheKey = false;
+    let currentCacheKey = `_${eqData.metadata.generated}`;
     let eqFeatures = eqData.features;
     let eqFeaturesLength = eqFeatures.length;
-    // only cache if data
+    var featureData = false;
     if (eqFeatures && eqFeaturesLength != 0) {
-      currentCacheKey = `_${eqData.metadata.generated}`;
       eqDataCache[currentCacheKey] = eqFeatures;
+      featureData = true;
     }
     else {
-      // @todo no data markup here
-      console.log('no data');
+      eqDataCache[currentCacheKey] = false;
     }
     return {
+      featureData: featureData,
       currentCacheKey: currentCacheKey,
       eqDataCache: eqDataCache
     }
@@ -169,11 +174,9 @@ var getEqData = (() => {
   return {
     fetch() {
       let url = eqPastHourQuery.getPastHourUrl();
-      console.log(url);
       get(url)
         .then((response) => {
           let eqData = JSON.parse(response);
-          console.log(eqData);
           return eqData;
         }, (error) => {
           console.log('parse error ', error);
@@ -182,11 +185,16 @@ var getEqData = (() => {
           return cacheEqData(eqData);
         })
         .then((currentCache) => {
-          console.log(currentCache);
-          eqDataMarkupGenerator.createTableRows(
-            currentCache.currentCacheKey,
-            currentCache.eqDataCache
-          );
+          if (currentCache.featureData) {
+            eqDataMarkupGenerator.createTableRows(
+              currentCache.currentCacheKey,
+              currentCache.eqDataCache
+            );
+          }
+          else {
+            // @todo no data markup here
+            console.log('no feature data');
+          }
         });
     }
   }
@@ -204,6 +212,7 @@ var getEqData = (() => {
   const eqDataUpdateBtn = document.getElementById('eq-data-update');
   getEqData.fetch();
   eqDataUpdateBtn.addEventListener('click', () => {
+    eqDataMarkupGenerator.emptyTable();
     getEqData.fetch();
   });
 })();
